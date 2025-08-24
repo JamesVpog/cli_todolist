@@ -7,7 +7,7 @@ import (
 
 func main() {
 	// use os.args to get the commands 
-	// TODO: list of commands (create, finish, view)
+	// TODO: list of commands (add "task desc", list, done [task number], del [task number])
 	
 	if len(os.Args) == 1 {
 		//print the default help thingy
@@ -17,9 +17,10 @@ func main() {
 	
 	command := os.Args[1]
 
+	
 	switch command {
-	case "view":
-		view()
+	case "list":
+		list()
 	default:
 		fmt.Println("Command not recognized. Call ./todo --help for more information.")
 		return 
@@ -28,7 +29,7 @@ func main() {
 }
 
 // Output the current task list to terminal 
-func view() {
+func list() {
 	// look for json file in current directory 
 	file, err := os.Open("tasks.json") 
 	if err != nil {
