@@ -1,12 +1,13 @@
 package main
 
-// TODO: make use of JSON for storage
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"strconv"
+	"github.com/adrg/xdg"
+	"path/filepath"
 )
 
 
@@ -21,6 +22,7 @@ The commands are:
 		done		complete a task 
 		del		delete a task
 		list		view all tasks 
+		rm		delete the todo list
 
 Use "todo help <command>" for more information about a command.
 
@@ -64,18 +66,36 @@ func main() {
 		list()
 	case "help":
 		fmt.Println("TODO: implement help text for all the commands")
+	case "rm":
+		rm()
 	default:
 		fmt.Print(default_help_text)
 		return
 	}
 
 }
+func getDataPath() (filePath string, err error) {
+    // Stores in 
+	// ~/.local/share/todo/tasks.json for Linux
+	// /Library/Application\ Support/todo/tasks.json for macOS
+	//  %AppData%\todo\tasks.json for Windows
+
+    return xdg.DataFile("todo/tasks.json")
+}
 
 // returns a slice of Tasks from tasks.json and err.
 //  If tasks.json doesn't exist, it is an empty slice of Tasks and not an error 
 func loadTasks() (tasks []Task, err error) { 
 
-	data, err := os.ReadFile("tasks.json") 
+	dataPath, err := getDataPath()
+    if err != nil {
+        return nil, err
+    }
+    
+    // Create directory if it doesn't exist
+    os.MkdirAll(filepath.Dir(dataPath), 0755)
+
+	data, err := os.ReadFile(dataPath) 
 
 	if errors.Is(err, os.ErrNotExist) { 
 		return tasks, nil
@@ -97,13 +117,17 @@ func loadTasks() (tasks []Task, err error) {
 
 // given tasks, saves tasks to tasks.json
 func saveTasks(tasks []Task) (err error) {
+    dataPath, err := getDataPath()
+    if err != nil {
+        return err
+    }
 	// marshal data to json format
 	b, err := json.MarshalIndent(tasks, "", "	")
 	if err != nil {
 		return err
 	}
 
-	err = os.WriteFile("tasks.json", b, 0644)
+	err = os.WriteFile(dataPath, b, 0644)
 	if err != nil {
 		return err
 	}
@@ -257,4 +281,18 @@ func list() {
 	for _, t := range current_tasks {
 		fmt.Printf("%s  %s\n",t.Status, t.Description)
 	}
+}
+
+//removes the todo list from file storage
+func rm() {
+	dataPath, err := getDataPath()
+	if err != nil {
+		panic(err)
+	}
+	err = os.Remove(dataPath)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Removed the todo list")
 }
