@@ -2,10 +2,12 @@ package main
 
 // TODO: make use of JSON for storage
 import (
-	"bufio"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 )
+
 
 const default_help_text string = `./todo is a todolist manager cli written in Go.
 
@@ -15,18 +17,20 @@ Usage:
 
 The commands are:
 		add			create a new task 
-		done 		complete a task 
+		done		complete a task 
 		del			delete a task
-		list 		view all tasks 
+		list		view all tasks 
 
 Use "./todo help <command>" for more information about a command.
 
 `
 
+// have to use uppercase First letter to make the Task fields visible to the encoding/json package
+// In Go, uppercase first letter means exported variable that is visible to other packages 
 type Task struct {
-	num    int
-	name   string
-	status string
+    ID          int    `json:"id"`
+    Description string `json:"description"`
+    Status      string `json:"status"`
 }
 
 func main() {
@@ -48,7 +52,6 @@ func main() {
 			return
 		}
 		add(task_names)
-		fmt.Println("Added task to tasks.txt!")
 	case "done":
 		task_numbers := os.Args[2:]
 		complete(task_numbers)
@@ -67,38 +70,90 @@ func main() {
 // Given a slice of strings, add tasks with status of pending into tasks.json
 func add(tasks []string) {
 
-	// TODO: make new IDs from the tasks.json
+	start_id := 0
 
-	var new_tasks []Task
+	_ , err := os.OpenFile("tasks.json", os.O_RDONLY, 0644)
 
-	for i, v := range tasks {
-		var new_task Task
-		new_task.name = v
-		new_task.num = i + 1
-		new_task.status = "pending"
+	// tasks.json does not exist, write to file
+	if errors.Is(err, os.ErrNotExist) { 
 
-		new_tasks = append(new_tasks, new_task)
-	}
-
-	// create a new file
-	file, err := os.Create("tasks.txt")
-	if err != nil {
-		fmt.Printf("%s", err)
-		return
-	}
-	// write each new task to txt file
-	for _, v := range new_tasks {
-		var status_box string
-		if v.status == "pending" {
-			status_box = "[ ]"
-		} else {
-			status_box = "[x]"
+		file, err := os.Create("tasks.json")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
 		}
-		task_string := status_box + " " + v.name + "\n"
-		file.WriteString(task_string)
+		file.Close()
+
+		start_id = 1
+
+		var new_tasks []Task
+
+		
+		for _ , v := range tasks {
+			var new_task Task
+			new_task.Description = v
+			new_task.ID = start_id 
+			new_task.Status = "[ ]"
+
+			start_id += 1
+			new_tasks = append(new_tasks, new_task)
+		}
+		
+		// marshal data to json format
+		b, err := json.MarshalIndent(new_tasks, "", "	")
+		if err != nil {
+			panic(err)
+		}
+
+		err = os.WriteFile("tasks.json", b, 0644)
+		if err != nil {
+			panic(err)
+		}
+		
+	} else { // tasks.json does exist 
+		//
+		data, err := os.ReadFile("tasks.json")
+		if err != nil {
+			panic(err)
+		}
+		var current_tasks []Task 
+
+		err = json.Unmarshal(data, &current_tasks)
+		if err != nil {
+			panic(err)
+		}
+
+		// get the latest ID plus one to start the new tasks
+		start_id = current_tasks[len(current_tasks) - 1].ID + 1
+
+		var new_tasks []Task
+		
+		for _ , v := range tasks {
+			var new_task Task
+			new_task.Description = v
+			new_task.ID = start_id 
+			new_task.Status = "[ ]"
+
+			start_id += 1
+			new_tasks = append(new_tasks, new_task)
+		}
+		
+		// combine old tasks with new tasks
+		current_tasks = append(current_tasks, new_tasks...)
+
+		// marshal data to json format
+		b, err := json.MarshalIndent(current_tasks, "", "	")
+		if err != nil {
+			panic(err)
+		}
+
+		err = os.WriteFile("tasks.json", b, 0644)
+		if err != nil {
+			panic(err)
+		}
 	}
 
-	file.Close()
+	fmt.Println("Added tasks to tasks.json!")
 }
 
 // Given a slice of task numbers, change the status of each task to done
@@ -111,21 +166,25 @@ func del(task_numbers []string) {
 
 }
 
-// Output the tasks.json list to stdout
+// Output the tasks.json list to stdout in pretty format 
 func list() {
 
-	file, err := os.Open("tasks.json")
+	data, err := os.ReadFile("tasks.json")
 	if err != nil {
 		fmt.Printf("%s. Please create a task first with ./todo add <task_1> <task_2> ... \n", err)
 		return
 	}
 
-	scanner := bufio.NewScanner(file)
+	//unmarshal json 
+	var tasks []Task 
+
+	err = json.Unmarshal(data, &tasks)
+	if err != nil {
+		panic(err)
+	}	
 
 	fmt.Println("Current list of tasks:")
-	for scanner.Scan() {
-		fmt.Println(scanner.Text())
+	for _, t := range tasks {
+		fmt.Printf("%s  %s\n",t.Status, t.Description)
 	}
-	file.Close()
-
 }
