@@ -14,7 +14,7 @@ const default_help_text string = `./todo is a todolist manager cli written in Go
 
 Usage:
 
-        ./todo <command> [arguments]
+        todo <command> [arguments]
 
 The commands are:
 		add		create a new task 
@@ -22,7 +22,7 @@ The commands are:
 		del		delete a task
 		list		view all tasks 
 
-Use "./todo help <command>" for more information about a command.
+Use "todo help <command>" for more information about a command.
 
 `
 
