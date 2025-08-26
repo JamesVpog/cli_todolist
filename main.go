@@ -35,9 +35,6 @@ type Task struct {
 }
 
 func main() {
-	// use os.args to get the commands
-	// TODO: list of commands (add task_1 task_2 ... , list, done [task number], del [task number])
-
 	if len(os.Args) == 1 {
 		fmt.Print(default_help_text)
 		os.Exit(1)
@@ -76,8 +73,8 @@ func main() {
 
 // returns a slice of Tasks from tasks.json and err.
 //  If tasks.json doesn't exist, it is an empty slice of Tasks and not an error 
-func loadTasks() (tasks []Task, err error) { // using named returns!
-	
+func loadTasks() (tasks []Task, err error) { 
+
 	data, err := os.ReadFile("tasks.json") 
 
 	if errors.Is(err, os.ErrNotExist) { 
@@ -96,6 +93,21 @@ func loadTasks() (tasks []Task, err error) { // using named returns!
 	}
 
 	return tasks, nil 
+}
+
+func saveTasks(tasks []Task) (err error) {
+	// marshal data to json format
+	b, err := json.MarshalIndent(tasks, "", "	")
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile("tasks.json", b, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 // Given a slice of strings, add tasks with status of pending into tasks.json
 func add(tasks []string) {
@@ -129,31 +141,18 @@ func add(tasks []string) {
 	// current tasks and new tasks combine
 	current_tasks = append(current_tasks, new_tasks...)
 
-	// marshal data to json format
-	b, err := json.MarshalIndent(current_tasks, "", "	")
+	err = saveTasks(current_tasks)
+
 	if err != nil {
 		panic(err)
 	}
-
-	err = os.WriteFile("tasks.json", b, 0644)
-	if err != nil {
-		panic(err)
-	}
-
 	fmt.Println("Added tasks to tasks.json!")
 }
 
 // Given a slice of task numbers, change the status of each task to done
 func complete(task_numbers []string) {
-	// unmarshal json
-	data, err := os.ReadFile("tasks.json")
-	if err != nil {
-		panic(err)
-	}
-	
-	var current_tasks []Task 
-	
-	err = json.Unmarshal(data, &current_tasks)
+
+	current_tasks, err := loadTasks()
 	if err != nil {
 		panic(err)
 	}
@@ -183,15 +182,8 @@ func complete(task_numbers []string) {
 			return
 		}
 	}
-	// marshal current tasks and write to tasks.json
 
-	// marshal data to json format
-	b, err := json.MarshalIndent(current_tasks, "", "	")
-	if err != nil {
-		panic(err)
-	}
-
-	err = os.WriteFile("tasks.json", b, 0644)
+	err = saveTasks(current_tasks)
 	if err != nil {
 		panic(err)
 	}
@@ -203,16 +195,7 @@ func complete(task_numbers []string) {
 
 // Given a slice of task numbers, delete each task from the tasks.json
 func del(task_numbers []string) {
-	// unmarshal json
-
-	data, err := os.ReadFile("tasks.json")
-	if err != nil {
-		panic(err)
-	}
-	
-	var current_tasks []Task 
-	
-	err = json.Unmarshal(data, &current_tasks)
+	current_tasks, err := loadTasks()
 	if err != nil {
 		panic(err)
 	}
@@ -247,15 +230,7 @@ func del(task_numbers []string) {
 	for i := range current_tasks {
 		current_tasks[i].ID = i 
 	}
-	// marshal current tasks and write to tasks.json
-
-	// marshal data to json format
-	b, err := json.MarshalIndent(current_tasks, "", "	")
-	if err != nil {
-		panic(err)
-	}
-
-	err = os.WriteFile("tasks.json", b, 0644)
+	err = saveTasks(current_tasks)
 	if err != nil {
 		panic(err)
 	}
@@ -266,23 +241,19 @@ func del(task_numbers []string) {
 
 // Output the tasks.json list to stdout in pretty format 
 func list() {
-
-	data, err := os.ReadFile("tasks.json")
-	if err != nil {
-		fmt.Printf("%s. Please create a task first with ./todo add <task_1> <task_2> ... \n", err)
-		return
-	}
-
-	//unmarshal json 
-	var tasks []Task 
-
-	err = json.Unmarshal(data, &tasks)
+	current_tasks, err := loadTasks()
 	if err != nil {
 		panic(err)
-	}	
+	}
+
+	// should not call list with empty tasks
+	if len(current_tasks) == 0 {
+		fmt.Println("Please create a task first with ./todo add <task_1> <task_2> ... ")
+		os.Exit(1)
+	}
 
 	fmt.Println("Current list of tasks:")
-	for _, t := range tasks {
+	for _, t := range current_tasks {
 		fmt.Printf("%s  %s\n",t.Status, t.Description)
 	}
 }
