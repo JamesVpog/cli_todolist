@@ -17,9 +17,9 @@ Usage:
         ./todo <command> [arguments]
 
 The commands are:
-		add			create a new task 
+		add		create a new task 
 		done		complete a task 
-		del			delete a task
+		del		delete a task
 		list		view all tasks 
 
 Use "./todo help <command>" for more information about a command.
@@ -65,6 +65,8 @@ func main() {
 		del(task_numbers)
 	case "list":
 		list()
+	case "help":
+		fmt.Println("TODO: implement help text for all the commands")
 	default:
 		fmt.Print(default_help_text)
 		return
@@ -75,7 +77,7 @@ func main() {
 // Given a slice of strings, add tasks with status of pending into tasks.json
 func add(tasks []string) {
 
-	start_id := 0
+	var start_id int
 
 	_ , err := os.OpenFile("tasks.json", os.O_RDONLY, 0644)
 
@@ -87,8 +89,6 @@ func add(tasks []string) {
 			panic(err)
 		}
 		file.Close()
-
-		start_id = 1
 
 		var new_tasks []Task
 
@@ -175,18 +175,31 @@ func complete(task_numbers []string) {
 		panic(err)
 	}
 
-
+	// make a map of task.id to index which looks up the tasks
+	taskMap := make(map[int]int) 
+	for i, task := range current_tasks {
+		taskMap[task.ID] = i
+	}
 	// for each task_num, grab the task it refers to and set its status to [x]
 	for i := range task_numbers {
-		task_num, err :=  strconv.Atoi(task_numbers[i])
+		taskNum, err :=  strconv.Atoi(task_numbers[i])
 		if err != nil {
 			panic(err)
-		
-			
+		}
+
+		// lookup the taskNum in taskMap
+		// using the index works because the tasks.json is ordered
+		index, exists := taskMap[taskNum]
+
+		// if it exists, then change its status to x
+		if exists {
+            current_tasks[index].Status = "[x]"
+        } else {
+			// trying to delete a task with invalid id 
+			fmt.Printf("task %d does not exist in tasks.json\n", taskNum)
+			return
+		}
 	}
-
-
-	// complete a task by setting its status to [x]
 	// marshal current tasks and write to tasks.json
 
 	// marshal data to json format
@@ -200,6 +213,8 @@ func complete(task_numbers []string) {
 		panic(err)
 	}
 
+	fmt.Println("Completed task(s)!")
+	list()
 
 }
 
@@ -207,7 +222,63 @@ func complete(task_numbers []string) {
 func del(task_numbers []string) {
 	// unmarshal json
 
-	// for each task, complete a task if task number matches 
+	data, err := os.ReadFile("tasks.json")
+	if err != nil {
+		panic(err)
+	}
+	
+	var current_tasks []Task 
+	
+	err = json.Unmarshal(data, &current_tasks)
+	if err != nil {
+		panic(err)
+	}
+
+	// make a map of task.id to index which looks up the tasks
+	taskMap := make(map[int]int) 
+	for i, task := range current_tasks {
+		taskMap[task.ID] = i
+	}
+	// for each task_num, grab the task it refers to, and remove it
+	for i := range task_numbers {
+		taskNum, err :=  strconv.Atoi(task_numbers[i])
+		if err != nil {
+			panic(err)
+		}
+
+		// lookup the taskNum in taskMap
+		// using the index works because the tasks.json is ordered
+		index, exists := taskMap[taskNum]
+
+		// if it exists, then remove the index at that slice wtih append
+		// this appends eleements until the index, and elements after the index, effectively skipping the index
+		if exists {
+			current_tasks = append(current_tasks[:index], current_tasks[index+1:]...)
+        } else {
+			// trying to delete a task with invalid id 
+			fmt.Printf("task %d does not exist in tasks.json\n", taskNum)
+			return
+		}
+	}
+	// go through all the tasks and re-id them since they are out of order 
+	for i := range current_tasks {
+		current_tasks[i].ID = i 
+	}
+	// marshal current tasks and write to tasks.json
+
+	// marshal data to json format
+	b, err := json.MarshalIndent(current_tasks, "", "	")
+	if err != nil {
+		panic(err)
+	}
+
+	err = os.WriteFile("tasks.json", b, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Deleted task(s)!")
+	list()
 }
 
 // Output the tasks.json list to stdout in pretty format 
