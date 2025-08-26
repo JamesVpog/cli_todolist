@@ -95,6 +95,7 @@ func loadTasks() (tasks []Task, err error) {
 	return tasks, nil 
 }
 
+// given tasks, saves tasks to tasks.json
 func saveTasks(tasks []Task) (err error) {
 	// marshal data to json format
 	b, err := json.MarshalIndent(tasks, "", "	")
@@ -112,7 +113,7 @@ func saveTasks(tasks []Task) (err error) {
 // Given a slice of strings, add tasks with status of pending into tasks.json
 func add(tasks []string) {
 
-	// starts creating tasks at 0 for empty current_tasks  
+	// start_id will be 0 if current_tasks is empty 
 	var start_id int
 
 	current_tasks, err := loadTasks()
