@@ -74,87 +74,70 @@ func main() {
 
 }
 
+// returns a slice of Tasks from tasks.json and err.
+//  If tasks.json doesn't exist, it is an empty slice of Tasks and not an error 
+func loadTasks() (tasks []Task, err error) { // using named returns!
+	
+	data, err := os.ReadFile("tasks.json") 
+
+	if errors.Is(err, os.ErrNotExist) { 
+		return tasks, nil
+	}
+
+	if err != nil {
+		//file-read error 
+		return nil, err
+	}
+	//else there is tasks.json, unmarshall it 
+	err = json.Unmarshal(data, &tasks)
+	if err != nil {
+		//error unmarshalling data 
+		return nil, err
+	}
+
+	return tasks, nil 
+}
 // Given a slice of strings, add tasks with status of pending into tasks.json
 func add(tasks []string) {
 
+	// starts creating tasks at 0 for empty current_tasks  
 	var start_id int
 
-	_ , err := os.OpenFile("tasks.json", os.O_RDONLY, 0644)
+	current_tasks, err := loadTasks()
+	if err != nil {
+		panic(err)
+	}
 
-	// tasks.json does not exist, write to file
-	if errors.Is(err, os.ErrNotExist) { 
-
-		file, err := os.Create("tasks.json")
-		if err != nil {
-			panic(err)
-		}
-		file.Close()
-
-		var new_tasks []Task
-
-		for _ , v := range tasks {
-			var new_task Task
-			new_task.Description = v
-			new_task.ID = start_id 
-			new_task.Status = "[ ]"
-
-			start_id += 1
-			new_tasks = append(new_tasks, new_task)
-		}
-		
-		// marshal data to json format
-		b, err := json.MarshalIndent(new_tasks, "", "	")
-		if err != nil {
-			panic(err)
-		}
-
-		err = os.WriteFile("tasks.json", b, 0644)
-		if err != nil {
-			panic(err)
-		}
-		
-	} else { // tasks.json does exist 
-
-		data, err := os.ReadFile("tasks.json")
-		if err != nil {
-			panic(err)
-		}
-
-		var current_tasks []Task 
-
-		err = json.Unmarshal(data, &current_tasks)
-		if err != nil {
-			panic(err)
-		}
-
-		// get the latest ID plus one to start the new tasks
+	if len(current_tasks) != 0 {
+		// tasks.json exists
 		start_id = current_tasks[len(current_tasks) - 1].ID + 1
 
-		var new_tasks []Task
-		
-		for _ , v := range tasks {
-			var new_task Task
-			new_task.Description = v
-			new_task.ID = start_id 
-			new_task.Status = "[ ]"
+	}
 
-			start_id += 1
-			new_tasks = append(new_tasks, new_task)
-		}
-		
-		// combine old tasks with new tasks
-		current_tasks = append(current_tasks, new_tasks...)
+	var new_tasks []Task
 
-		// marshal data to json format
-		b, err := json.MarshalIndent(current_tasks, "", "	")
-		if err != nil {
-			panic(err)
-		}
+	for _ , v := range tasks {
+		var new_task Task
+		new_task.Description = v
+		new_task.ID = start_id 
+		new_task.Status = "[ ]"
 
-		err = os.WriteFile("tasks.json", b, 0644)
-		if err != nil {
-			panic(err)
-		}
+		start_id += 1
+		new_tasks = append(new_tasks, new_task)
+	}
+
+	// current tasks and new tasks combine
+	current_tasks = append(current_tasks, new_tasks...)
+
+	// marshal data to json format
+	b, err := json.MarshalIndent(current_tasks, "", "	")
+	if err != nil {
+		panic(err)
+	}
+
+	err = os.WriteFile("tasks.json", b, 0644)
+	if err != nil {
+		panic(err)
 	}
 
 	fmt.Println("Added tasks to tasks.json!")

@@ -31,4 +31,5 @@ go.work.sum
 # .idea/
 # .vscode/
 
-.json
+tasks.json
+/todo
