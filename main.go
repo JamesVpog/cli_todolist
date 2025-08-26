@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 )
 
 
@@ -48,12 +49,16 @@ func main() {
 	case "add":
 		task_names := os.Args[2:]
 		if len(task_names) == 0 {
-			fmt.Println("Not enough arguments. At least one task name is required to create a task after the ./todo command.")
+			fmt.Println("Not enough arguments. At least one task name is required to create a task after the ./todo add command.")
 			return
 		}
 		add(task_names)
 	case "done":
 		task_numbers := os.Args[2:]
+		if len(task_numbers) == 0 {
+			fmt.Println("Not enough arguments. At least one task number is required to create a task after the ./todo done command.")
+			return
+		}
 		complete(task_numbers)
 	case "del":
 		task_numbers := os.Args[2:]
@@ -79,8 +84,7 @@ func add(tasks []string) {
 
 		file, err := os.Create("tasks.json")
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			panic(err)
 		}
 		file.Close()
 
@@ -88,7 +92,6 @@ func add(tasks []string) {
 
 		var new_tasks []Task
 
-		
 		for _ , v := range tasks {
 			var new_task Task
 			new_task.Description = v
@@ -111,11 +114,12 @@ func add(tasks []string) {
 		}
 		
 	} else { // tasks.json does exist 
-		//
+
 		data, err := os.ReadFile("tasks.json")
 		if err != nil {
 			panic(err)
 		}
+
 		var current_tasks []Task 
 
 		err = json.Unmarshal(data, &current_tasks)
@@ -158,12 +162,52 @@ func add(tasks []string) {
 
 // Given a slice of task numbers, change the status of each task to done
 func complete(task_numbers []string) {
+	// unmarshal json
+	data, err := os.ReadFile("tasks.json")
+	if err != nil {
+		panic(err)
+	}
+	
+	var current_tasks []Task 
+	
+	err = json.Unmarshal(data, &current_tasks)
+	if err != nil {
+		panic(err)
+	}
+
+
+	// for each task_num, grab the task it refers to and set its status to [x]
+	for i := range task_numbers {
+		task_num, err :=  strconv.Atoi(task_numbers[i])
+		if err != nil {
+			panic(err)
+		
+			
+	}
+
+
+	// complete a task by setting its status to [x]
+	// marshal current tasks and write to tasks.json
+
+	// marshal data to json format
+	b, err := json.MarshalIndent(current_tasks, "", "	")
+	if err != nil {
+		panic(err)
+	}
+
+	err = os.WriteFile("tasks.json", b, 0644)
+	if err != nil {
+		panic(err)
+	}
+
 
 }
 
 // Given a slice of task numbers, delete each task from the tasks.json
 func del(task_numbers []string) {
+	// unmarshal json
 
+	// for each task, complete a task if task number matches 
 }
 
 // Output the tasks.json list to stdout in pretty format 
