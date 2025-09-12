@@ -2,6 +2,9 @@
 
 This was a fun hobby project to learn Go and flags so it ~~might~~ does have bugs. Feel free to open an issue or PR.
 
+## Demo
+![Output sample](https://github.com/JamesVpog/todo/demo.gif)
+
 ## Installation 
 
 1. Make sure you have go 1.25.0 or higher installed https://go.dev/
