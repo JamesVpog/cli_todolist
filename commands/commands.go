@@ -1,0 +1,114 @@
+// holds exeuction of commands and structure of commands, also helper functions
+package commands
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/adrg/xdg"
+)
+
+// all commands follow this Runner interface
+type Runner interface {
+	Init([]string) error
+	Run() error
+	Name() string
+}
+
+// have to use uppercase First letter to make the Task fields visible to the encoding/json package
+// In Go, uppercase first letter means exported variable that is visible to other packages
+type Task struct {
+	ID          int    `json:"id"`
+	Description string `json:"description"`
+	Status      string `json:"status"`
+}
+
+func Root(args []string) error {
+
+	if len(args) < 1 {
+		return errors.New("error: you must pass a sub-command")
+	}
+	// TODO: Definitions of all the commands
+	cmds := []Runner{
+		NewAddCommand(),
+	}
+
+	subcmd := os.Args[1]
+
+	for _, cmd := range cmds {
+		// if our subcmd matches any of the commands
+		if cmd.Name() == subcmd {
+			// init the command
+			err := cmd.Init(os.Args[2:])
+			if err != nil {
+				return err
+			}
+			// run the command with side effects
+			return cmd.Run()
+		}
+	}
+	return fmt.Errorf("todo: %s is not a todo command. See 'todo -help'. ", subcmd)
+}
+
+func getDataPath() (filePath string, err error) {
+	// Stores in
+	// ~/.local/share/todo/tasks.json for Linux
+	// /Library/Application\ Support/todo/tasks.json for macOS
+	//  %AppData%\todo\tasks.json for Windows
+
+	return xdg.DataFile("todo/tasks.json")
+}
+
+// If tasks.json doesn't exist, it is an empty slice of Tasks and not an error
+func loadTasks() (tasks []Task, err error) {
+
+	dataPath, err := getDataPath()
+	if err != nil {
+		return nil, err
+	}
+
+	// Create directory if it doesn't exist
+	os.MkdirAll(filepath.Dir(dataPath), 0755)
+
+	data, err := os.ReadFile(dataPath)
+
+	if errors.Is(err, os.ErrNotExist) {
+		return tasks, nil
+	}
+
+	if err != nil {
+		//file-read error
+		return nil, err
+	}
+	//else there is tasks.json, unmarshall it
+	err = json.Unmarshal(data, &tasks)
+	if err != nil {
+		//error unmarshalling data
+		return nil, err
+	}
+
+	return tasks, nil
+}
+
+// given tasks, saves tasks to tasks.json
+func saveTasks(tasks []Task) (err error) {
+	dataPath, err := getDataPath()
+	if err != nil {
+		return err
+	}
+	// marshal data to json format
+	b, err := json.MarshalIndent(tasks, "", "	")
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(dataPath, b, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

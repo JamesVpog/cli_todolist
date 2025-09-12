@@ -1,298 +1,310 @@
 package main
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
-	"strconv"
-	"github.com/adrg/xdg"
-	"path/filepath"
+
+	"github.com/JamesVpog/todo/commands"
 )
 
+// const default_help_text string = `./todo is a todolist manager cli written in Go.
 
-const default_help_text string = `./todo is a todolist manager cli written in Go.
+// Usage:
 
-Usage:
+//         todo <command> [arguments]
 
-        todo <command> [arguments]
+// The commands are:
+// 		add		create a new task 
+// 		done		complete a task 
+// 		del		delete a task
+// 		list		view all tasks 
+// 		rm		delete the todo list
 
-The commands are:
-		add		create a new task 
-		done		complete a task 
-		del		delete a task
-		list		view all tasks 
-		rm		delete the todo list
+// Use "todo help <command>" for more information about a command.
 
-Use "todo help <command>" for more information about a command.
+// `
 
-`
+// // have to use uppercase First letter to make the Task fields visible to the encoding/json package
+// // In Go, uppercase first letter means exported variable that is visible to other packages
+// type Task struct {
+// 	ID          int    `json:"id"`
+// 	Description string `json:"description"`
+// 	Status      string `json:"status"`
+// }
 
-// have to use uppercase First letter to make the Task fields visible to the encoding/json package
-// In Go, uppercase first letter means exported variable that is visible to other packages 
-type Task struct {
-    ID          int    `json:"id"`
-    Description string `json:"description"`
-    Status      string `json:"status"`
-}
-
+// handle errors returned from commands
 func main() {
-	if len(os.Args) == 1 {
-		fmt.Print(default_help_text)
+	if err := commands.Root(os.Args[1:]); err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
-
-	command := os.Args[1]
-
-	switch command {
-	case "add":
-		task_names := os.Args[2:]
-		if len(task_names) == 0 {
-			fmt.Println("Not enough arguments. At least one task name is required to create a task after the ./todo add command.")
-			return
-		}
-		add(task_names)
-	case "done":
-		task_numbers := os.Args[2:]
-		if len(task_numbers) == 0 {
-			fmt.Println("Not enough arguments. At least one task number is required to create a task after the ./todo done command.")
-			return
-		}
-		complete(task_numbers)
-	case "del":
-		task_numbers := os.Args[2:]
-		del(task_numbers)
-	case "list":
-		list()
-	case "help":
-		fmt.Println("TODO: implement help text for all the commands")
-	case "rm":
-		rm()
-	default:
-		fmt.Print(default_help_text)
-		return
-	}
-
-}
-func getDataPath() (filePath string, err error) {
-    // Stores in 
-	// ~/.local/share/todo/tasks.json for Linux
-	// /Library/Application\ Support/todo/tasks.json for macOS
-	//  %AppData%\todo\tasks.json for Windows
-
-    return xdg.DataFile("todo/tasks.json")
 }
 
-// returns a slice of Tasks from tasks.json and err.
-//  If tasks.json doesn't exist, it is an empty slice of Tasks and not an error 
-func loadTasks() (tasks []Task, err error) { 
+// func main() {
+// 	if len(os.Args) == 1 {
+// 		fmt.Print(default_help_text)
+// 		os.Exit(1)
+// 	}
 
-	dataPath, err := getDataPath()
-    if err != nil {
-        return nil, err
-    }
-    
-    // Create directory if it doesn't exist
-    os.MkdirAll(filepath.Dir(dataPath), 0755)
+// 	command := os.Args[1]
 
-	data, err := os.ReadFile(dataPath) 
+// 	switch command {
+// 	case "add":
+// 		task_names := os.Args[2:]
+// 		if len(task_names) == 0 {
+// 			fmt.Println("Not enough arguments. At least one task name is required to create a task after the ./todo add command.")
+// 			return
+// 		}
+// 		add(task_names)
+// 	case "done":
+// 		task_numbers := os.Args[2:]
+// 		if len(task_numbers) == 0 {
+// 			fmt.Println("Not enough arguments. At least one task number is required to create a task after the ./todo done command.")
+// 			return
+// 		}
+// 		complete(task_numbers)
+// 	case "del":
+// 		task_numbers := os.Args[2:]
+// 		del(task_numbers)
+// 	case "list":
+// 		list()
+// 	case "help":
+// 		help_cmd := os.Args[2]
+// 		switch help_cmd {
+// 		case "add":
+// 			fmt.Println("usage: add")
+// 		}
+// 		fmt.Println("TODO: implement help text for all the commands")
+// 	case "rm":
+// 		rm()
+// 	default:
+// 		fmt.Print(default_help_text)
 
-	if errors.Is(err, os.ErrNotExist) { 
-		return tasks, nil
-	}
+// 		return
+// 	}
 
-	if err != nil {
-		//file-read error 
-		return nil, err
-	}
-	//else there is tasks.json, unmarshall it 
-	err = json.Unmarshal(data, &tasks)
-	if err != nil {
-		//error unmarshalling data 
-		return nil, err
-	}
+// }
+// func getDataPath() (filePath string, err error) {
+// 	// Stores in
+// 	// ~/.local/share/todo/tasks.json for Linux
+// 	// /Library/Application\ Support/todo/tasks.json for macOS
+// 	//  %AppData%\todo\tasks.json for Windows
 
-	return tasks, nil 
-}
+// 	return xdg.DataFile("todo/tasks.json")
+// }
 
-// given tasks, saves tasks to tasks.json
-func saveTasks(tasks []Task) (err error) {
-    dataPath, err := getDataPath()
-    if err != nil {
-        return err
-    }
-	// marshal data to json format
-	b, err := json.MarshalIndent(tasks, "", "	")
-	if err != nil {
-		return err
-	}
+// // returns a slice of Tasks from tasks.json and err.
+// //
+// //	If tasks.json doesn't exist, it is an empty slice of Tasks and not an error
+// func loadTasks() (tasks []Task, err error) {
 
-	err = os.WriteFile(dataPath, b, 0644)
-	if err != nil {
-		return err
-	}
+// 	dataPath, err := getDataPath()
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return nil
-}
-// Given a slice of strings, add tasks with status of pending into tasks.json
-func add(tasks []string) {
+// 	// Create directory if it doesn't exist
+// 	os.MkdirAll(filepath.Dir(dataPath), 0755)
 
-	// start_id will be 0 if current_tasks is empty 
-	var start_id int
+// 	data, err := os.ReadFile(dataPath)
 
-	current_tasks, err := loadTasks()
-	if err != nil {
-		panic(err)
-	}
+// 	if errors.Is(err, os.ErrNotExist) {
+// 		return tasks, nil
+// 	}
 
-	if len(current_tasks) != 0 {
-		// tasks.json exists
-		start_id = current_tasks[len(current_tasks) - 1].ID + 1
+// 	if err != nil {
+// 		//file-read error
+// 		return nil, err
+// 	}
+// 	//else there is tasks.json, unmarshall it
+// 	err = json.Unmarshal(data, &tasks)
+// 	if err != nil {
+// 		//error unmarshalling data
+// 		return nil, err
+// 	}
 
-	}
+// 	return tasks, nil
+// }
 
-	var new_tasks []Task
+// // given tasks, saves tasks to tasks.json
+// func saveTasks(tasks []Task) (err error) {
+// 	dataPath, err := getDataPath()
+// 	if err != nil {
+// 		return err
+// 	}
+// 	// marshal data to json format
+// 	b, err := json.MarshalIndent(tasks, "", "	")
+// 	if err != nil {
+// 		return err
+// 	}
 
-	for _ , v := range tasks {
-		var new_task Task
-		new_task.Description = v
-		new_task.ID = start_id 
-		new_task.Status = "[ ]"
+// 	err = os.WriteFile(dataPath, b, 0644)
+// 	if err != nil {
+// 		return err
+// 	}
 
-		start_id += 1
-		new_tasks = append(new_tasks, new_task)
-	}
+// 	return nil
+// }
 
-	// current tasks and new tasks combine
-	current_tasks = append(current_tasks, new_tasks...)
+// // Given a slice of strings, add tasks with status of pending into tasks.json
+// func add(tasks []string) {
 
-	err = saveTasks(current_tasks)
+// 	// start_id will be 0 if current_tasks is empty
+// 	var start_id int
 
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Added tasks to tasks.json!")
-}
+// 	current_tasks, err := loadTasks()
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-// Given a slice of task numbers, change the status of each task to done
-func complete(task_numbers []string) {
+// 	if len(current_tasks) != 0 {
+// 		// tasks.json exists
+// 		start_id = current_tasks[len(current_tasks)-1].ID + 1
 
-	current_tasks, err := loadTasks()
-	if err != nil {
-		panic(err)
-	}
+// 	}
 
-	// make a map of task.id to index which looks up the tasks
-	taskMap := make(map[int]int) 
-	for i, task := range current_tasks {
-		taskMap[task.ID] = i
-	}
-	// for each task_num, grab the task it refers to and set its status to [x]
-	for i := range task_numbers {
-		taskNum, err :=  strconv.Atoi(task_numbers[i])
-		if err != nil {
-			panic(err)
-		}
+// 	var new_tasks []Task
 
-		// lookup the taskNum in taskMap
-		// using the index works because the tasks.json is ordered
-		index, exists := taskMap[taskNum]
+// 	for _, v := range tasks {
+// 		var new_task Task
+// 		new_task.Description = v
+// 		new_task.ID = start_id
+// 		new_task.Status = "[ ]"
 
-		// if it exists, then change its status to x
-		if exists {
-            current_tasks[index].Status = "[x]"
-        } else {
-			// trying to delete a task with invalid id 
-			fmt.Printf("task %d does not exist in tasks.json\n", taskNum)
-			return
-		}
-	}
+// 		start_id += 1
+// 		new_tasks = append(new_tasks, new_task)
+// 	}
 
-	err = saveTasks(current_tasks)
-	if err != nil {
-		panic(err)
-	}
+// 	// current tasks and new tasks combine
+// 	current_tasks = append(current_tasks, new_tasks...)
 
-	fmt.Println("Completed task(s)!")
-	list()
+// 	err = saveTasks(current_tasks)
 
-}
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	fmt.Println("Added tasks to tasks.json!")
+// }
 
-// Given a slice of task numbers, delete each task from the tasks.json
-func del(task_numbers []string) {
-	current_tasks, err := loadTasks()
-	if err != nil {
-		panic(err)
-	}
+// // Given a slice of task numbers, change the status of each task to done
+// func complete(task_numbers []string) {
 
-	// make a map of task.id to index which looks up the tasks
-	taskMap := make(map[int]int) 
-	for i, task := range current_tasks {
-		taskMap[task.ID] = i
-	}
-	// for each task_num, grab the task it refers to, and remove it
-	for i := range task_numbers {
-		taskNum, err :=  strconv.Atoi(task_numbers[i])
-		if err != nil {
-			panic(err)
-		}
+// 	current_tasks, err := loadTasks()
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-		// lookup the taskNum in taskMap
-		// using the index works because the tasks.json is ordered
-		index, exists := taskMap[taskNum]
+// 	// make a map of task.id to index which looks up the tasks
+// 	taskMap := make(map[int]int)
+// 	for i, task := range current_tasks {
+// 		taskMap[task.ID] = i
+// 	}
+// 	// for each task_num, grab the task it refers to and set its status to [x]
+// 	for i := range task_numbers {
+// 		taskNum, err := strconv.Atoi(task_numbers[i])
+// 		if err != nil {
+// 			panic(err)
+// 		}
 
-		// if it exists, then remove the index at that slice wtih append
-		// this appends eleements until the index, and elements after the index, effectively skipping the index
-		if exists {
-			current_tasks = append(current_tasks[:index], current_tasks[index+1:]...)
-        } else {
-			// trying to delete a task with invalid id 
-			fmt.Printf("task %d does not exist in tasks.json\n", taskNum)
-			return
-		}
-	}
-	// go through all the tasks and re-id them since they are out of order 
-	for i := range current_tasks {
-		current_tasks[i].ID = i 
-	}
-	err = saveTasks(current_tasks)
-	if err != nil {
-		panic(err)
-	}
+// 		// lookup the taskNum in taskMap
+// 		// using the index works because the tasks.json is ordered
+// 		index, exists := taskMap[taskNum]
 
-	fmt.Println("Deleted task(s)!")
-	list()
-}
+// 		// if it exists, then change its status to x
+// 		if exists {
+// 			current_tasks[index].Status = "[x]"
+// 		} else {
+// 			// trying to delete a task with invalid id
+// 			fmt.Printf("task %d does not exist in tasks.json\n", taskNum)
+// 			return
+// 		}
+// 	}
 
-// Output the tasks.json list to stdout in pretty format 
-func list() {
-	current_tasks, err := loadTasks()
-	if err != nil {
-		panic(err)
-	}
+// 	err = saveTasks(current_tasks)
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	// should not call list with empty tasks
-	if len(current_tasks) == 0 {
-		fmt.Println("Please create a task first with ./todo add <task_1> <task_2> ... ")
-		os.Exit(1)
-	}
+// 	fmt.Println("Completed task(s)!")
+// 	list()
 
-	fmt.Println("Current list of tasks:")
-	for _, t := range current_tasks {
-		fmt.Printf("%s  %s\n",t.Status, t.Description)
-	}
-}
+// }
 
-//removes the todo list from file storage
-func rm() {
-	dataPath, err := getDataPath()
-	if err != nil {
-		panic(err)
-	}
-	err = os.Remove(dataPath)
-	if err != nil {
-		panic(err)
-	}
+// // Given a slice of task numbers, delete each task from the tasks.json
+// func del(task_numbers []string) {
+// 	current_tasks, err := loadTasks()
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	fmt.Println("Removed the todo list")
-}
+// 	// make a map of task.id to index which looks up the tasks
+// 	taskMap := make(map[int]int)
+// 	for i, task := range current_tasks {
+// 		taskMap[task.ID] = i
+// 	}
+// 	// for each task_num, grab the task it refers to, and remove it
+// 	for i := range task_numbers {
+// 		taskNum, err := strconv.Atoi(task_numbers[i])
+// 		if err != nil {
+// 			panic(err)
+// 		}
+
+// 		// lookup the taskNum in taskMap
+// 		// using the index works because the tasks.json is ordered
+// 		index, exists := taskMap[taskNum]
+
+// 		// if it exists, then remove the index at that slice wtih append
+// 		// this appends eleements until the index, and elements after the index, effectively skipping the index
+// 		if exists {
+// 			current_tasks = append(current_tasks[:index], current_tasks[index+1:]...)
+// 		} else {
+// 			// trying to delete a task with invalid id
+// 			fmt.Printf("task %d does not exist in tasks.json\n", taskNum)
+// 			return
+// 		}
+// 	}
+// 	// go through all the tasks and re-id them since they are out of order
+// 	for i := range current_tasks {
+// 		current_tasks[i].ID = i
+// 	}
+// 	err = saveTasks(current_tasks)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+
+// 	fmt.Println("Deleted task(s)!")
+// 	list()
+// }
+
+// // Output the tasks.json list to stdout in pretty format
+// func list() {
+// 	current_tasks, err := loadTasks()
+// 	if err != nil {
+// 		panic(err)
+// 	}
+
+// 	// should not call list with empty tasks
+// 	if len(current_tasks) == 0 {
+// 		fmt.Println("Please create a task first with ./todo add <task_1> <task_2> ... ")
+// 		os.Exit(1)
+// 	}
+
+// 	fmt.Println("Current list of tasks:")
+// 	for _, t := range current_tasks {
+// 		fmt.Printf("%s  %s\n", t.Status, t.Description)
+// 	}
+// }
+
+// // removes the todo list from file storage
+// func rm() {
+// 	dataPath, err := getDataPath()
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	err = os.Remove(dataPath)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+
+// 	fmt.Println("Removed the todo list")
+// }
