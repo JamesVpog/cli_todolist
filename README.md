@@ -1,7 +1,8 @@
 # todo
 
 ## What is a todolist? 
-[A list of errands and other tasks – often written on a piece of paper as a memory aid – that one needs or intends to accomplish.](https://en.wiktionary.org/wiki/to-do_list)
+[todo list](https://en.wiktionary.org/wiki/to-do_list): 
+A list of errands and other tasks – often written on a piece of paper as a memory aid – that one needs or intends to accomplish.
 
 ## Why did I make a todo cli app?
 This was a fun hobby project to learn Go and flags and I don't like leaving my terminal. It ~~might~~ does have bugs, so feel free to open an issue or PR.
