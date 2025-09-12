@@ -1,6 +1,10 @@
-# Simple CLI Todo list manager made in Go 
+# todo
 
-This was a fun hobby project to learn Go and flags so it ~~might~~ does have bugs. Feel free to open an issue or PR.
+## What is a todolist? 
+[A list of errands and other tasks – often written on a piece of paper as a memory aid – that one needs or intends to accomplish.](https://en.wiktionary.org/wiki/to-do_list)
+
+## Why did I make a todo cli app?
+This was a fun hobby project to learn Go and flags and I don't like leaving my terminal. It ~~might~~ does have bugs, so feel free to open an issue or PR.
 
 ## Demo
 [![asciicast](https://asciinema.org/a/MQoVyKzJI0nlOX7DXKtNnuRwA.svg)](https://asciinema.org/a/MQoVyKzJI0nlOX7DXKtNnuRwA)
