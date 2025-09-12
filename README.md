@@ -3,7 +3,7 @@
 This was a fun hobby project to learn Go and flags so it ~~might~~ does have bugs. Feel free to open an issue or PR.
 
 ## Demo
-![Output sample](https://github.com/JamesVpog/todo/demo.gif)
+![Output sample](https://github.com/JamesVpog/todo/blob/main/demo.gif)
 
 ## Installation 
 
