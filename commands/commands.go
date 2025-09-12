@@ -26,10 +26,29 @@ type Task struct {
 	Status      string `json:"status"`
 }
 
+const helpText = 
+`
+todo is a todolist manager cli written in Go.
+
+Usage:
+
+        todo <command> [arguments]
+
+The commands are:
+		add		create a new task 
+		done		complete a task 
+		del		delete a task
+		list		view all tasks 
+		rm		delete the todo list
+
+Use "todo <command> -h" for more information about a command.
+`
 func Root(args []string) error {
 
 	if len(args) < 1 {
-		return errors.New("error: you must pass a sub-command")
+        fmt.Fprintf(os.Stderr, "todo: no command specified\nRun 'todo -help' for the full list of commands.\n")
+        os.Exit(1)
+        return nil
 	}
 	// all the commands
 	cmds := []Runner{
@@ -42,6 +61,11 @@ func Root(args []string) error {
 
 	subcmd := os.Args[1]
 
+	// check if help message 
+	if subcmd == "-help" {
+		fmt.Print(helpText)
+		return nil
+	}
 	for _, cmd := range cmds {
 		// if our subcmd matches any of the commands
 		if cmd.Name() == subcmd {
