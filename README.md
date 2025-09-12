@@ -1,6 +1,6 @@
 # todo
 
-## What is a todolist? 
+## What is a todo list? 
 [todo list](https://en.wiktionary.org/wiki/to-do_list): 
 A list of errands and other tasks – often written on a piece of paper as a memory aid – that one needs or intends to accomplish.
 
