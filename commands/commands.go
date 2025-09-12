@@ -36,6 +36,7 @@ func Root(args []string) error {
 		NewAddCommand(),
 		NewDoneCommand(),
 		NewRemoveCommand(),
+		NewDeleteCommand(),
 	}
 
 	subcmd := os.Args[1]
