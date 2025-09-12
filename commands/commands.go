@@ -31,12 +31,13 @@ func Root(args []string) error {
 	if len(args) < 1 {
 		return errors.New("error: you must pass a sub-command")
 	}
-	// TODO: Definitions of all the commands
+	// all the commands
 	cmds := []Runner{
 		NewAddCommand(),
 		NewDoneCommand(),
 		NewRemoveCommand(),
 		NewDeleteCommand(),
+		NewListCommand(),
 	}
 
 	subcmd := os.Args[1]
