@@ -1,6 +1,6 @@
 # Simple CLI Todo list manager made in Go 
 
-so simple... This was a fun hobby project to learn Go so it ~~might~~ does have bugs. Feel free to open an issue or PR.
+This was a fun hobby project to learn Go and flags so it ~~might~~ does have bugs. Feel free to open an issue or PR.
 
 ## Installation 
 
