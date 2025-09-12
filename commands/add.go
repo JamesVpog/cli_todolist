@@ -82,6 +82,5 @@ func (a *AddCommand) Run() error {
 	fmt.Println("Added tasks to tasks.json!")
 
 	list()
-	
 	return nil //no errors!
 }
