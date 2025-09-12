@@ -41,7 +41,11 @@ func (dc *DeleteCommand) Name() string {
 // Given a slice of task numbers, delete each task from the tasks.json
 func (dc *DeleteCommand) Run() error {
 
-	dc.taskNums = stringSliceToIntSlice(dc.fs.Args())
+	var err error
+	dc.taskNums, err = stringSliceToIntSlice(dc.fs.Args())
+	if err != nil {
+		return(err)
+	}
 
 	if len(dc.taskNums) < 1 {
 		fmt.Fprintf(os.Stderr, "Nothing specified, nothing deleted.\n")

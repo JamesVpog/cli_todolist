@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -37,16 +38,17 @@ func (dc *DoneCommand) Name() string {
 }
 
 // https://stackoverflow.com/questions/24972950/go-convert-strings-in-array-to-integer
-func stringSliceToIntSlice(s []string) (intSlice []int) {
+func stringSliceToIntSlice(s []string) (intSlice []int, err error) {
 
 	for _, i := range s {
 		j, err := strconv.Atoi(i)
 		if err != nil {
-			panic(err)
+			errMsg := fmt.Sprintf("arg %s is not a number: must pass int as argument to reference task numbers in todo list", i)
+			return nil, errors.New(errMsg)
 		}
 		intSlice = append(intSlice, j)
 	}
-	return intSlice
+	return intSlice, nil
 }
 
 // change the status of each task in dc.taskNums to done
@@ -57,7 +59,11 @@ func (dc *DoneCommand) Run() error {
 		fmt.Fprintf(os.Stderr, "hint: Maybe you wanted to say `todo done 0 1'`?\n")
 		return nil
 	}
-	dc.taskNums = stringSliceToIntSlice(dc.fs.Args())
+	var err error
+	dc.taskNums, err = stringSliceToIntSlice(dc.fs.Args())
+	if err != nil {
+		return(err)
+	}
 
 	current_tasks, err := loadTasks()
 	if err != nil {
