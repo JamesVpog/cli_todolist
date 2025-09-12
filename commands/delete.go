@@ -37,6 +37,7 @@ func (dc *DeleteCommand) Name() string {
 	return dc.fs.Name()
 }
 
+// TODO: fix delete with multiple task nums
 // Given a slice of task numbers, delete each task from the tasks.json
 func (dc *DeleteCommand) Run() error {
 
