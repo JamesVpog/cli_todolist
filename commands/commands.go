@@ -34,6 +34,7 @@ func Root(args []string) error {
 	// TODO: Definitions of all the commands
 	cmds := []Runner{
 		NewAddCommand(),
+		NewDoneCommand(),
 	}
 
 	subcmd := os.Args[1]
@@ -111,4 +112,24 @@ func saveTasks(tasks []Task) (err error) {
 	}
 
 	return nil
+}
+
+// shared between add, done, list, and del
+// Output the tasks.json list to stdout in pretty format
+func list() {
+	current_tasks, err := loadTasks()
+	if err != nil {
+		panic(err)
+	}
+
+	// should not call list with empty tasks
+	if len(current_tasks) == 0 {
+		fmt.Println("Please create a task first with ./todo add <task_1> <task_2> ... ")
+		os.Exit(1)
+	}
+
+	fmt.Println("Current list of tasks:")
+	for _, t := range current_tasks {
+		fmt.Printf("%s  %s\n", t.Status, t.Description)
+	}
 }

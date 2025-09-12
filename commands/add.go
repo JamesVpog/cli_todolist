@@ -1,3 +1,4 @@
+// add sub-command implementation
 package commands
 
 import (
@@ -28,7 +29,6 @@ TASK    names of tasks to add to the task list
 	return ac
 }
 
-// methods to be considered in the Runner interface
 func (a *AddCommand) Init(args []string) error {
 	return a.fs.Parse(args)
 }
@@ -43,7 +43,7 @@ func (a *AddCommand) Run() error {
 	a.tasks = a.fs.Args()
 	if len(a.tasks) < 1 {
 		fmt.Fprintf(os.Stderr, "Nothing specified, nothing added.\n")
-		fmt.Fprintf(os.Stderr, "hint: Maybe you wanted to say `todo add 'example task 1`?")
+		fmt.Fprintf(os.Stderr, "hint: Maybe you wanted to say `todo add 'example task 1`?\n")
 		return nil
 	}
 	// start_id will be 0 if current_tasks is empty
@@ -80,5 +80,8 @@ func (a *AddCommand) Run() error {
 		panic(err)
 	}
 	fmt.Println("Added tasks to tasks.json!")
-	return nil
+
+	list()
+	
+	return nil //no errors!
 }

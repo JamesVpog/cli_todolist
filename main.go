@@ -7,6 +7,14 @@ import (
 	"github.com/JamesVpog/todo/commands"
 )
 
+// handle errors returned from commands
+func main() {
+	if err := commands.Root(os.Args[1:]); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
 // const default_help_text string = `./todo is a todolist manager cli written in Go.
 
 // Usage:
@@ -14,10 +22,10 @@ import (
 //         todo <command> [arguments]
 
 // The commands are:
-// 		add		create a new task 
-// 		done		complete a task 
+// 		add		create a new task
+// 		done		complete a task
 // 		del		delete a task
-// 		list		view all tasks 
+// 		list		view all tasks
 // 		rm		delete the todo list
 
 // Use "todo help <command>" for more information about a command.
@@ -31,14 +39,6 @@ import (
 // 	Description string `json:"description"`
 // 	Status      string `json:"status"`
 // }
-
-// handle errors returned from commands
-func main() {
-	if err := commands.Root(os.Args[1:]); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
 
 // func main() {
 // 	if len(os.Args) == 1 {
@@ -144,46 +144,6 @@ func main() {
 // 	}
 
 // 	return nil
-// }
-
-// // Given a slice of strings, add tasks with status of pending into tasks.json
-// func add(tasks []string) {
-
-// 	// start_id will be 0 if current_tasks is empty
-// 	var start_id int
-
-// 	current_tasks, err := loadTasks()
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	if len(current_tasks) != 0 {
-// 		// tasks.json exists
-// 		start_id = current_tasks[len(current_tasks)-1].ID + 1
-
-// 	}
-
-// 	var new_tasks []Task
-
-// 	for _, v := range tasks {
-// 		var new_task Task
-// 		new_task.Description = v
-// 		new_task.ID = start_id
-// 		new_task.Status = "[ ]"
-
-// 		start_id += 1
-// 		new_tasks = append(new_tasks, new_task)
-// 	}
-
-// 	// current tasks and new tasks combine
-// 	current_tasks = append(current_tasks, new_tasks...)
-
-// 	err = saveTasks(current_tasks)
-
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	fmt.Println("Added tasks to tasks.json!")
 // }
 
 // // Given a slice of task numbers, change the status of each task to done
